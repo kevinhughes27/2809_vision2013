@@ -13,12 +13,6 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
     
 	// Blur
 	blur(img_gray, img_gray, Size(5,5)); 
-
-	if(debug)
-	{
-		imshow("image", img_gray);
-		waitKey();
-	}
 	
 	// Sobel Filters
     Mat img_sobelx;
@@ -62,18 +56,16 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 	
 	// findContours
     vector< vector< Point> > contours;
-	findContours(img_erode,
-            contours,
-            CV_RETR_EXTERNAL,
-            CV_CHAIN_APPROX_NONE);
+	findContours(img_erode,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
 	
 	vector<vector<Point> >::iterator itc = contours.begin();
     vector<RotatedRect> rects;
 	
 	// filter by contour size
 	while (itc!=contours.end()) {
-        //Create bounding rect of object
-        RotatedRect mr= minAreaRect(Mat(*itc));
+        
+		//Create bounding rect of object
+        RotatedRect mr = minAreaRect(Mat(*itc));
         
 		if( !verifySizes(mr))
 		{
@@ -114,6 +106,7 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 			imshow("image", result);
 			waitKey();
 		}
+		
 		// Get rotation matrix
 		float r= (float)rects[i].size.width / (float)rects[i].size.height;
 		float angle=rects[i].angle;    
@@ -143,13 +136,14 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 		blur(grayResult, grayResult, Size(3,3));
 		grayResult=histeq(grayResult);
 		
-		segmentedTargets.push_back(grayResult.clone());
-		
 		if(debug)
 		{
 			imshow("image", grayResult);
 			waitKey();
 		}
+		
+		// add target
+		segmentedTargets.push_back(grayResult.clone());
 	}
 	
 	return segmentedTargets;
