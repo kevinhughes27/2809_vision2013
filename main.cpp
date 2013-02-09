@@ -1,4 +1,5 @@
 #include <opencv2/core/core.hpp>
+#include <opencv2/ml/ml.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "segmentTargets.h"
@@ -9,7 +10,7 @@ using namespace std;
 int main()
 {
 	// load images
-	Mat image = imread("image2.png");
+	Mat image = imread("image.png");
 
 	// segment candidate targets
 	vector<Mat> targetCandidates = segmentTargets(image, true);
@@ -26,10 +27,32 @@ int main()
 		}
 	}
 	
-	// run candidates through the svm
-		// requries reshape
+	// classify with SVM
+	CvSVM *svmClassifier = new CvSVM();
+	svmClassifier->load("svm.xml");
+	
+	vector<Mat>::iterator it = targetCandidates.begin();
+    vector<Mat> targets;
+	
+	while (it!=targetCandidates.end()) 
+	{
+		Mat sample = Mat(*it);
+		Mat sampleVec = sample.reshape(1,1).clone();
+		sampleVec.convertTo(sampleVec,CV_32FC1);
+		
+		if( (int)svmClassifier->predict(sample) == 0 )
+		{
+            it = targetCandidates.erase(it);
+        }
+		else if ( (int)svmClassifier->predict(sample) == 1 )
+		{
+            ++it;
+            targets.push_back(sample);
+        }
+    }	
 		
 	// save top target to text file
-
+	// whoa I need to go back and return the locations from segment
+	
 	return 0;
 }

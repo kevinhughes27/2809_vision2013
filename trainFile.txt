@@ -1,0 +1,2 @@
+1 targets/image.png
+0 non_targets/image.png
