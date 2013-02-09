@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -g -Wall
-SRCS = main.cpp
+SRCS = main.cpp segmentTargets.cpp
 PROG = vision.exe
 
 OPENCV = -I"C:\opencv\build\include" -L"C:\opencv\build\x86\mingw\lib" -lopencv_core243 -lopencv_imgproc243 -lopencv_highgui243
