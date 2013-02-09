@@ -56,7 +56,7 @@ int main()
 	bool saveRegions=false;
 	string filename= "s";
 
-	Mat image = imread("TestImage2.jpg");
+	Mat image = imread("image2.png");
 	Mat img_gray;
     cvtColor(image, img_gray, CV_BGR2GRAY);
     blur(img_gray, img_gray, Size(5,5)); 
@@ -86,9 +86,12 @@ int main()
 	Mat img_rectangle;
 	Mat element = getStructuringElement(MORPH_RECT, Size(5, 40) );
     morphologyEx(img_threshold, img_rectangle, CV_MOP_CLOSE, element);
+	
+	Mat img_dilate;
+	dilate(img_rectangle, img_dilate, Mat(), Point(-1,-1), 5);
 
 	Mat img_erode;
-	erode(img_rectangle, img_erode, Mat(), Point(-1,-1), 5);
+	erode(img_dilate, img_erode, Mat(), Point(-1,-1), 6);
 	
 	imshow("image", img_erode);
 	waitKey();
