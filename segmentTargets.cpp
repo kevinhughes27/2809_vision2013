@@ -3,9 +3,10 @@
 using namespace cv;
 using namespace std;
 
-vector<Mat> segmentTargets(const Mat &image, bool debug)
+void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &locations, bool debug)
 {
-	vector<Mat> segmentedTargets;
+	candidates.clear();
+	locations.clear();
 
 	// Convert to grayscale
 	Mat img_gray;
@@ -39,7 +40,7 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 	
 	// Morphological Operator
 	Mat img_rectangle;
-	Mat element = getStructuringElement(MORPH_RECT, Size(5, 40) );
+	Mat element = getStructuringElement(MORPH_RECT, Size(MORPH_RECT_WIDTH, MORPH_RECT_HEIGHT) );
     morphologyEx(img_threshold, img_rectangle, CV_MOP_CLOSE, element);
 	
 	Mat img_dilate;
@@ -127,7 +128,7 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 		
 		// resize
 		Mat resultResized;
-		resultResized.create(33,144, CV_8UC3);
+		resultResized.create(TARGET_HEIGHT_PIXELS,TARGET_WIDTH_PIXELS, CV_8UC3);
 		resize(img_crop, resultResized, resultResized.size(), 0, 0, INTER_CUBIC);
 		
 		//Equalize croped image
@@ -143,10 +144,11 @@ vector<Mat> segmentTargets(const Mat &image, bool debug)
 		}
 		
 		// add target
-		segmentedTargets.push_back(grayResult.clone());
+		candidates.push_back(grayResult.clone());
+		locations.push_back(rects[i].center);
 	}
 	
-	return segmentedTargets;
+	return;
 }
 
 bool verifySizes(RotatedRect mr)

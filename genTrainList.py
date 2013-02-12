@@ -24,17 +24,24 @@ def main():
 	
 	trainFile = open(trainFilePath, 'w')
 
+	# file types to add
+	types = ('*.png', '*.jpg')
+	
 	# add targets
 	os.chdir("targets")
-	for file in glob.glob("*.png"):
-		trainFile.write('1' + ' ' + 'targets/' + file + '\n')
+	for type in types:
+		for file in glob.glob(type):
+			print file
+			trainFile.write('1' + ' ' + 'targets/' + file + '\n')
 	
 	os.chdir('..')
 	
 	# add non_targets
 	os.chdir("non_targets")
-	for file in glob.glob("*.png"):
-		trainFile.write('0' + ' ' + 'non_targets/' + file + '\n')	
+	for type in types:
+		for file in glob.glob(type):
+			print file
+			trainFile.write('0' + ' ' + 'non_targets/' + file + '\n')	
 		
 		
 if __name__ == "__main__":
