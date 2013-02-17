@@ -1,3 +1,4 @@
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -11,11 +12,19 @@
 using namespace cv;
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+	Mat image;
+	
 	// load images
-	Mat image = imread("image2.png");
-
+	if(argc == 1)
+		image = imread("image.png");
+	else
+	{
+		cout << argv[0] << " " << argv[1] << endl; 
+		image = imread(argv[1]);
+	}
+	
 	// segment candidate targets
 	vector<Mat> targetCandidates;
 	vector<Point> candidateLocations;
@@ -28,8 +37,9 @@ int main()
 		for(unsigned int i = 0; i < targetCandidates.size(); i++)
 		{
 			// save as current date time
+			time_t t = time(0);
 			stringstream ss;
-			ss << "unclassified/" << "image" << "_" << i << ".jpg";
+			ss << "unclassified/" << "image" << "_" << t << i << ".jpg";
 			cout << ss.str() << endl;
 			imwrite(ss.str(), targetCandidates[i]);
 		}
@@ -65,6 +75,8 @@ int main()
         }
     }	
 	
+	bool targetFound = locations.size() > 0;
+	
 	Point bestTarget(image.cols, image.rows);
 	for(unsigned int i = 0; i < locations.size(); i++)
 	{
@@ -75,7 +87,7 @@ int main()
 	// save top target to text file
 	ofstream f;
 	f.open ("target.txt");
-	f << bestTarget.x << "\n" << bestTarget.y <<"\n";
+	f << targetFound << endl << bestTarget.x << endl << bestTarget.y << endl;
 	f.close();
 	
 	if(bestTarget.y != image.rows)
