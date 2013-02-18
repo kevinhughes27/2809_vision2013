@@ -3,39 +3,52 @@
 using namespace cv;
 using namespace std;
 
-void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &locations, bool debug)
+void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &locations, bool log, bool debug)
 {
 	candidates.clear();
 	locations.clear();
 
-	// Convert to grayscale
-	Mat img_gray;
-    cvtColor(image, img_gray, CV_BGR2GRAY);
+	if(log)
+	{
+		imwrite("logs/0_image.png", image);
+	}
+	
+	// Convert to CV_8UC1 (8 bit single channel)
+	// split channels
+	vector<Mat> channels;
+	split(image, channels);
     
 	// Blur
-	blur(img_gray, img_gray, Size(5,5)); 
+	Mat img_gray;
+	blur(channels[2], img_gray, Size(5,5)); 
 	
-	// Sobel Filters
-    Mat img_sobelx;
-    Sobel(img_gray, img_sobelx, CV_8U, 1, 0, 3, 1, 0, BORDER_DEFAULT);
+	if(debug)
+	{
+		imshow("image", img_gray);
+		waitKey();
+	}
 	
-	Mat img_thresholdx;
-    threshold(img_sobelx, img_thresholdx, 0, 255, CV_THRESH_OTSU+CV_THRESH_BINARY);
+	if(log)
+	{
+		imwrite("logs/1_image_gray.png", img_gray);
+	}
 	
+	// Sobel Filter
 	Mat img_sobely;
     Sobel(img_gray, img_sobely, CV_8U, 0, 1, 3, 1, 0, BORDER_DEFAULT);
 	
-	Mat img_thresholdy;
-    threshold(img_sobely, img_thresholdy, 0, 255, CV_THRESH_OTSU+CV_THRESH_BINARY);
-	
-	Mat img_threshold; 
-	addWeighted(img_thresholdx, 0.5, img_thresholdy, 0.5, 0, img_threshold);
-    threshold(img_threshold, img_threshold, 0, 255, CV_THRESH_OTSU+CV_THRESH_BINARY);
+	Mat img_threshold;
+    threshold(img_sobely, img_threshold, 0, 255, CV_THRESH_OTSU+CV_THRESH_BINARY);
 	
 	if(debug)
 	{
 		imshow("image", img_threshold);
 		waitKey();
+	}
+	
+	if(log)
+	{
+		imwrite("logs/2_sobel.png", img_threshold);
 	}
 	
 	// Morphological Operator
@@ -53,6 +66,11 @@ void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &lo
 	{
 		imshow("image", img_erode);
 		waitKey();
+	}
+	
+	if(log)
+	{
+		imwrite("logs/3_morpho.png", img_erode);
 	}
 	
 	// findContours
@@ -81,12 +99,21 @@ void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &lo
 	
 	if(debug)
 	{
-		// Draw blue contours on a white image
+		// Draw blue contours on a black image
 		cv::Mat result = cv::Mat::zeros(image.size(),image.type());
 		cv::drawContours(result,contours, -1, cv::Scalar(255,0,0),1);
 
 		imshow("image", result);
 		waitKey();
+	}
+	
+	if(log)
+	{
+		// Draw blue contours on a black image
+		cv::Mat result = cv::Mat::zeros(image.size(),image.type());
+		cv::drawContours(result,contours, -1, cv::Scalar(255,0,0),1);
+		
+		imwrite("logs/4_contours.png", result);
 	}
 	
 	// transform the segmented regions
@@ -132,19 +159,16 @@ void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &lo
 		resize(img_crop, resultResized, resultResized.size(), 0, 0, INTER_CUBIC);
 		
 		//Equalize croped image
-		Mat grayResult;
-		cvtColor(resultResized, grayResult, CV_BGR2GRAY); 
-		blur(grayResult, grayResult, Size(3,3));
-		grayResult=histeq(grayResult);
+		resultResized=histeq(resultResized);
 		
 		if(debug)
 		{
-			imshow("image", grayResult);
+			imshow("image", resultResized);
 			waitKey();
 		}
 		
 		// add target
-		candidates.push_back(grayResult.clone());
+		candidates.push_back(resultResized.clone());
 		locations.push_back(rects[i].center);
 	}
 	
@@ -153,23 +177,26 @@ void segmentTargets(const Mat &image, vector<Mat> &candidates, vector<Point> &lo
 
 bool verifySizes(RotatedRect mr)
 { 
-    /*
+    //target: 120x40 aspect 3
 	float error=0.4;
-    //Spain car plate size: 52x11 aspect 4,7272
-    float aspect=4.7272;
-    //Set a min and max area. All other patchs are discarded
-    int min= 15*aspect*15; // minimum area
-    int max= 125*aspect*125; // maximum area
-    //Get only patchs that match to a respect ratio.
-    float rmin= aspect-aspect*error;
-    float rmax= aspect+aspect*error;
-
-    int area= mr.size.height * mr.size.width;
-    float r= (float)mr.size.width / (float)mr.size.height;
-    if(r<1)
+    float aspect = 3;
+    
+	//Set a min and max area. All other patchs are discarded
+    int min = 15*aspect*15; // minimum area
+    int max = 80*aspect*80; // maximum area
+    
+	//Get only patchs that match to a respect ratio.
+    float rmin = aspect-aspect*error;
+    float rmax = aspect+aspect*error;
+	
+	int area= mr.size.height * mr.size.width;
+	float r = (float)mr.size.width / (float)mr.size.height;
+	if(r<1)
         r= (float)mr.size.height / (float)mr.size.width;
-
-    if(( area < min || area > max ) || ( r < rmin || r > rmax ))
+		
+	//cout << "area " << area << " r " << r << endl;  
+	
+	if(( area < min || area > max ) || ( r < rmin || r > rmax ))
 	{
         return false;
     }
@@ -177,8 +204,6 @@ bool verifySizes(RotatedRect mr)
 	{
         return true;
     }
-	*/
-	return true;
 }
 
 Mat histeq(Mat in)

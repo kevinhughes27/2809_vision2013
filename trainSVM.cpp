@@ -32,7 +32,7 @@ int main()
             
             trainingLabels.push_back(atoi(t.c_str()));
             
-			Mat image = imread(d,0); // load as grayscale
+			Mat image = imread(d,1); // load as colour
 			
 			//imshow("image", image);
 			//waitKey();

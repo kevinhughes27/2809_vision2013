@@ -1,4 +1,4 @@
-# genTrainList.py
+# bootstrap.py
 #
 # by: Kevin Hughes
 # Febuary 2013
@@ -26,7 +26,7 @@ def main():
 		for file in glob.glob(type):
 			os.chdir('..')
 			print 'bootstrap/' + file
-			subprocess.call(['vision.exe', 'bootstrap/' + file])
+			subprocess.call(['vision.exe', 'bootstrap/' + file, "0"])
 			os.chdir("bootstrap")
 		
 if __name__ == "__main__":

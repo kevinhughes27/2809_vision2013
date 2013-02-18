@@ -29,10 +29,10 @@ int main(int argc, char* argv[])
 	vector<Mat> targetCandidates;
 	vector<Point> candidateLocations;
 	
-	segmentTargets(image, targetCandidates, candidateLocations, true);
+	segmentTargets(image, targetCandidates, candidateLocations, true, false);
 
 	// save candidates to hard disk
-	if(true)
+	if(false)
 	{ 
 		for(unsigned int i = 0; i < targetCandidates.size(); i++)
 		{
@@ -40,57 +40,61 @@ int main(int argc, char* argv[])
 			time_t t = time(0);
 			stringstream ss;
 			ss << "unclassified/" << "image" << "_" << t << i << ".jpg";
-			cout << ss.str() << endl;
+			//cout << ss.str() << endl;
 			imwrite(ss.str(), targetCandidates[i]);
 		}
 	}
 	
-	// classify with SVM
-	CvSVM *svmClassifier = new CvSVM();
-	svmClassifier->load("svm.xml");
-	
-	vector<Mat>::iterator it = targetCandidates.begin();
-	vector<Point>::iterator loc_it = candidateLocations.begin();
-    vector<Mat> targets;
-	vector<Point> locations;
-	
-	while (it!=targetCandidates.end()) 
+	// Run SVM
+	if(argc < 2)
 	{
-		Mat sample = Mat(*it);
-		Point loc = Point(*loc_it);
-		Mat sampleVec = sample.reshape(1,1).clone();
-		sampleVec.convertTo(sampleVec,CV_32FC1);
+		// classify with SVM
+		CvSVM *svmClassifier = new CvSVM();
+		svmClassifier->load("svm.xml");
 		
-		if( (int)svmClassifier->predict(sampleVec) == 0 )
+		vector<Mat>::iterator it = targetCandidates.begin();
+		vector<Point>::iterator loc_it = candidateLocations.begin();
+		vector<Mat> targets;
+		vector<Point> locations;
+		
+		while (it!=targetCandidates.end()) 
 		{
-            it = targetCandidates.erase(it);
-			loc_it = candidateLocations.erase(loc_it);
-        }
-		else if ( (int)svmClassifier->predict(sampleVec) == 1 )
+			Mat sample = Mat(*it);
+			Point loc = Point(*loc_it);
+			Mat sampleVec = sample.reshape(1,1).clone();
+			sampleVec.convertTo(sampleVec,CV_32FC1);
+			
+			if( (int)svmClassifier->predict(sampleVec) == 0 )
+			{
+				it = targetCandidates.erase(it);
+				loc_it = candidateLocations.erase(loc_it);
+			}
+			else if ( (int)svmClassifier->predict(sampleVec) == 1 )
+			{
+				++it;
+				++loc_it;
+				targets.push_back(sample);
+				locations.push_back(loc);
+			}
+		}	
+		
+		bool targetFound = locations.size() > 0;
+		
+		Point bestTarget(image.cols, image.rows);
+		for(unsigned int i = 0; i < locations.size(); i++)
 		{
-            ++it;
-			++loc_it;
-            targets.push_back(sample);
-			locations.push_back(loc);
-        }
-    }	
-	
-	bool targetFound = locations.size() > 0;
-	
-	Point bestTarget(image.cols, image.rows);
-	for(unsigned int i = 0; i < locations.size(); i++)
-	{
-		if(locations[i].y < bestTarget.y)
-			bestTarget = locations[i];
+			if(locations[i].y < bestTarget.y)
+				bestTarget = locations[i];
+		}
+		
+		// save top target to text file
+		ofstream f;
+		f.open ("target.txt");
+		f << targetFound << endl << bestTarget.x << endl << bestTarget.y << endl;
+		f.close();
+		
+		if(bestTarget.y != image.rows)
+			return 0;
 	}
-	
-	// save top target to text file
-	ofstream f;
-	f.open ("target.txt");
-	f << targetFound << endl << bestTarget.x << endl << bestTarget.y << endl;
-	f.close();
-	
-	if(bestTarget.y != image.rows)
-		return 0;
 	return 1;
 }
