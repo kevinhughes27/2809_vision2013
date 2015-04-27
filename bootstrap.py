@@ -5,7 +5,7 @@
 
 """
 This program generates bootstraps the SVM for the KBotics 2013 Vision System.
-This program will run vision.exe for each image in the bootstrap folder and 
+This program will run vision.exe for each image in the bootstrap folder and
 then dump the images into the unclassified folder. After running this program sort
 these images into the "targets" and "non-targets" dir. Then run the genTrainList.py
 followed by train.exe.
@@ -19,7 +19,7 @@ def main():
 
 	# file types to add
 	types = ('*.png', '*.jpg')
-	
+
 	# add targets
 	os.chdir("bootstrap")
 	for type in types:
@@ -28,6 +28,6 @@ def main():
 			print 'bootstrap/' + file
 			subprocess.call(['vision.exe', 'bootstrap/' + file, "0"])
 			os.chdir("bootstrap")
-		
+
 if __name__ == "__main__":
-    main()
+	main()
